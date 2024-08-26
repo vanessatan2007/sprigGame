@@ -2,10 +2,10 @@
 First time? Check out the tutorial game:
 https://sprig.hackclub.com/gallery/getting_started
 
-@title: 
-@author: 
-@tags: []
-@addedOn: 2024-00-00
+@title: Photosynthesis
+@author: Vanessa Tan
+@tags: [beginner]
+@addedOn: 2024-08-26
 */
 
 const player = "p";
@@ -119,24 +119,99 @@ const levels = [
 ...p...
 ggggggg`,
   map`
-c.w..s
-......
-......
-......
-......
-...p..`
+.......
+....s..
+.......
+..c....
+.......
+...w...
+...p...
+ggggggg`, map`
+......c
+.......
+.......
+s......
+.......
+...w...
+.......
+...p...
+ggggggg`,
+  map`
+.......
+.s.....
+.......
+.......
+.......
+.......
+...c...
+w......
+...p...
+  ggggggg`,map`
+......c
+.......
+.......
+.......
+s......
+.......
+.......
+.......
+.w.....
+...p...
+ggggggg`,map`
+.......
+w......
+.......
+......s
+.......
+.......
+....c..
+.......
+.......
+.......
+...p...
+ggggggg`,map`
+......c
+.......
+.......
+.......
+.......
+.......
+.......
+.......
+.......
+...s...
+w......
+...p...
+ggggggg`,map`
+......w
+c......
+.......
+.......
+.......
+.......
+.......
+.......
+.......
+.......
+.......
+s......
+...p...
+ggggggg`
+  
 ]
 const currentLevel = levels[level];
 setMap(currentLevel);
 
 setSolids([])
-let score = 0
+let scoreSun = 0
+let scoreWater = 0
+let scoreCo2 = 0
 
 
-setMap(levels[level])
+
 
 setPushables({
-  [ player ]: []
+  [ground]: []
 })
 
 var gameRunning = true; 
@@ -153,7 +228,20 @@ onInput("d", () => {
   }
 });
 
+onInput("j", () => {
+  const currentLevel = levels[level]; // get the original map of the level
 
+  // make sure the level exists before we load it
+  if (currentLevel !== undefined) {
+    clearText("");
+    setMap(currentLevel);
+    scoreSun = 0
+    scoreWater = 0
+    scoreCo2 = 0
+  }
+});
+
+//moving stuff down
 function moveSun() {
   let sunlights = getAll(sunlight);
 
@@ -178,19 +266,41 @@ function moveCo2() {
   }
   
 }
-function despawn() {
+
+//despawning stuff
+function despawnSun() {
   let sunlights = getAll(sunlight);
 
   for (let i = 0; i < sunlights.length; i++) {
-   if (sunlights[i].y == 6) {
+   if (sunlights[i].y == level+6) {
      sunlights[i].remove();
    }
   }
 }
 
+function despawnWater() {
+  let waters = getAll(water);
+
+  for (let i = 0; i < waters.length; i++) {
+   if (waters[i].y == level+6) {
+     waters[i].remove();
+   }
+  }
+}
+
+function despawnCo2() {
+  let co2s = getAll(co2);
+
+  for (let i = 0; i < co2s.length; i++) {
+   if (co2s[i].y == level+6) {
+     co2s[i].remove();
+   }
+  }
+}
 
 
-function checkHit() {
+//check overlapping stuff
+function checkSun() {
   let sunlights = getAll(sunlight);
   let p = getFirst(player);
 
@@ -203,23 +313,82 @@ function checkHit() {
   return false;
 }
 
+function checkWater() {
+  let waters = getAll(water);
+  let p = getFirst(player);
+
+  for (let i = 0; i < waters.length; i++) {
+    if (waters[i].x == p.x && waters[i].y == p.y) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function checkCo2() {
+  let co2s = getAll(co2);
+  let p = getFirst(player);
+
+  for (let i = 0; i < co2s.length; i++) {
+    if (co2s[i].x == p.x && co2s[i].y == p.y) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 
 var gameLoop = setInterval(() => {
+  addText(`Level: ${level+1}`, {x: 2, y: 1, color: color`L`})
   moveSun();
+  moveWater();
+  moveCo2();
   
-  despawn();
-  checkHit();
+  despawnSun();
+  despawnWater();
+  despawnCo2();
   
+  checkSun();
+  checkWater();
+  checkCo2();
   
-  if (checkHit()) {
-    score += 1
+  addText(`${scoreSun}`, { x: 4,y: 14, color: color`6` });
+  addText(`${scoreWater}`, { x:5, y: 14, color: color`7` });
+  addText(`${scoreCo2}`, { x:6, y: 14, color: color`1` });
+  if (checkSun()) {
+    scoreSun += 1;
+    addText(`${scoreSun}`, { x: 4,y: 14, color: color`6` });
   }
- /* if (checkHitFruits()) {
-    score += 1
-  }*/
+    if (checkWater()) {
+    scoreWater += 1;
+       addText(`${scoreWater}`, { x:5, y: 14, color: color`7` });
+  }
+    if (checkCo2()) {
+    scoreCo2 += 1;
+       addText(`${scoreCo2}`, { x:6, y: 14, color: color`1` });
+  }
   
-  addText(`Water: ${score}`, {x: 2, y: 1, color: color`L`})
+  if (scoreSun == 1 && scoreWater == 1 && scoreCo2 == 1) {
+    level += 1;
+    
+    
+    if (levels[level] !== undefined) {
+      setMap(levels[level]);
+      scoreSun = 0;
+    scoreWater = 0;
+    scoreCo2 = 0;
+    } else {
+      addText("you win!", { y: 4, color: color`3` });
+       scoreSun = 0
+    scoreWater = 0
+    scoreCo2 = 0
+    }
+  }
+    
+  
+  
   
 
 }, 1000-level*100);
