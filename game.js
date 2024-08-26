@@ -12,6 +12,7 @@ const player = "p";
 const sunlight = "s";
 const water = "w";
 const co2 = "c";
+const ground = "g";
 
 setLegend(
   [ player, bitmap`
@@ -82,7 +83,24 @@ setLegend(
 ....1.....1.....
 ....11...1......
 .....11..1......
-................`]
+................`],
+  [ground, bitmap`
+CCCCCCCCCCCCCCCC
+CCCCCCCCCCCCCCCC
+CCCCCCCCCCCCCCCC
+CCCCCCCCCCCCCCCC
+CCCCCCCCCCCCCCCC
+CCCCCCCCCCCCCCCC
+CCCCCCCCCCCCCCCC
+CCCCCCCCCCCCCCCC
+CCCCCCCCCCCCCCCC
+CCCCCCCCCCCCCCCC
+CCCCCCCCCCCCCCCC
+CCCCCCCCCCCCCCCC
+CCCCCCCCCCCCCCCC
+CCCCCCCCCCCCCCCC
+CCCCCCCCCCCCCCCC
+CCCCCCCCCCCCCCCC`]
 )
 
 setSolids([])
@@ -93,11 +111,13 @@ setPushables({
 let level = 0
 const levels = [
   map`
-c.w.s
-.....
-.....
-.....
-..p..`,
+...s...
+.......
+...c...
+.......
+...w...
+...p...
+ggggggg`,
   map`
 c.w..s
 ......
@@ -109,75 +129,97 @@ c.w..s
 const currentLevel = levels[level];
 setMap(currentLevel);
 
+setSolids([])
+let score = 0
+
+
+setMap(levels[level])
+
+setPushables({
+  [ player ]: []
+})
+
+var gameRunning = true; 
 
 onInput("a", () => {
-  getFirst(player).x -= 1
-})
-onInput("d", () => {
-  getFirst(player).x += 1
-})
-onInput("j", () => {
-  const currentLevel = levels[level]; // get the original map of the level
-
-  // make sure the level exists before we load it
-  if (currentLevel !== undefined) {
-    clearText("");
-    setMap(currentLevel);
+  if (gameRunning) {
+    getFirst(player).x -= 1;
   }
 });
 
-let plantSun = tilesWith(player, sunlight).length;
-  let plantWater = tilesWith(player, water).length;
-  let plantCo2 = tilesWith(player, co2).length;
+onInput("d", () => {
+  if (gameRunning) {
+    getFirst(player).x += 1;
+  }
+});
 
 
-function despawn() {
-  let waters = getAll(water);
+function moveSun() {
   let sunlights = getAll(sunlight);
-  let co2s = getAll(co2);
+
+  for (let i = 0; i < sunlights.length; i++) {
+    sunlights[i].y += 1;
+  }
+  
+}
+
+function moveWater() {
+  let waters = getAll(water);
 
   for (let i = 0; i < waters.length; i++) {
-   if (waters[i].y == 5) {
-     waters[i].remove();
+    waters[i].y += 1;
+  } 
+}
+function moveCo2() {
+  let co2s = getAll(co2);
+
+  for (let i = 0; i < co2s.length; i++) {
+    co2s[i].y += 1;
+  }
+  
+}
+function despawn() {
+  let sunlights = getAll(sunlight);
+
+  for (let i = 0; i < sunlights.length; i++) {
+   if (sunlights[i].y == 6) {
+     sunlights[i].remove();
    }
   }
 }
 
 
 
+function checkHit() {
+  let sunlights = getAll(sunlight);
+  let p = getFirst(player);
 
-
-afterInput(() => {
-  //move all sprites down
-  getFirst(sunlight).y += 1;
-  getFirst(water).y += 1;
-  getFirst(co2).y += 1;
-  despawn();
-
-  plantSun = plantSun + tilesWith(player, sunlight).length;
-  plantWater = plantWater + tilesWith(player, water).length;
-  plantCo2 = plantCo2 + tilesWith(player, co2).length;
-  if(plantSun > 0) {
-    sunlight.remove;
-  }
-  water.remove;
-  if (plantSun === 1 && plantWater === 1 && plantCo2===1) {
-    // increase the current level number
-    level = level + 1;
-
-    const currentLevel = levels[level];
-
-    // make sure the level exists and if so set the map
-    // otherwise, we have finished the last level, there is no level
-    // after the last level
-    if (currentLevel !== undefined) {
-      setMap(currentLevel);
-    } else {
-      addText("you win!", { y: 4, color: color`3` });
+  for (let i = 0; i < sunlights.length; i++) {
+    if (sunlights[i].x == p.x && sunlights[i].y == p.y) {
+      return true;
     }
   }
-})
+
+  return false;
+}
+
+
 
 var gameLoop = setInterval(() => {
+  moveSun();
+  
   despawn();
-}, 250);
+  checkHit();
+  
+  
+  if (checkHit()) {
+    score += 1
+  }
+ /* if (checkHitFruits()) {
+    score += 1
+  }*/
+  
+  addText(`Water: ${score}`, {x: 2, y: 1, color: color`L`})
+  
+
+}, 1000-level*100);
